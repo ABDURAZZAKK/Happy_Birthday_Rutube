@@ -1,9 +1,9 @@
-CREATE TABLE users(
+CREATE TABLE  IF NOT EXISTS users(
     email VARCHAR(128) PRIMARY KEY,
     password VARCHAR(512) NOT NULL
 );
 
-CREATE TABLE employees(
+CREATE TABLE IF NOT EXISTS employees(
     email VARCHAR(64) PRIMARY KEY,
     date_of_birth DATE NOT NULL
 );

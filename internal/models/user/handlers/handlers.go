@@ -36,9 +36,8 @@ func (h *UserHendlers) Login(c *fiber.Ctx) error {
 		})
 	}
 	day := time.Hour * 24
-	// Create the JWT claims, which includes the user ID and expiry time
+	// Create the JWT claims, which includes the user
 	claims := jtoken.MapClaims{
-		"ID":    user.ID,
 		"email": user.Email,
 		"exp":   time.Now().Add(day * 1).Unix(),
 	}

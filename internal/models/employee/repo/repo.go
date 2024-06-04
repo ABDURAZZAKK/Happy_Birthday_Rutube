@@ -24,7 +24,7 @@ func NewEmployeeRepo(conn *sqlx.DB) Employee {
 }
 
 func (r *employeeRepo) GetByEmail(email string) (*dto.Employee, error) {
-	var res *dto.Employee
+	res := new(dto.Employee)
 	err := r.Get(res, `
 				SELECT email, date_of_birth
 				FROM employees 
@@ -53,7 +53,7 @@ func (r *employeeRepo) GetAll(limit int) ([]*dto.Employee, error) {
 }
 
 func (r *employeeRepo) Create(in *dto.EmployeeIn) (*dto.Employee, error) {
-	var res *dto.Employee
+	res := new(dto.Employee)
 	err := r.Get(res, `	
 	INSERT INTO employees
 	(email, date_of_birth) 

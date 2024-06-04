@@ -1,6 +1,8 @@
 package app
 
 import (
+	"os"
+
 	"github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/config"
 	"github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/middlewares"
 	user_hendlers "github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/models/user/handlers"
@@ -16,12 +18,20 @@ func Run() {
 	// Create a new Fiber instance
 	app := fiber.New()
 
-	log.Info(config.DATABASE_URL)
 	db, err := sqlx.Open("sqlite3", config.DATABASE_URL)
-	defer db.Close()
 	if err != nil {
 		log.Fatalln(err)
 	}
+	defer db.Close()
+	sqlScheme, err := os.ReadFile("init.sql")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	_, err = db.Exec(string(sqlScheme))
+	if err != nil {
+		log.Fatalln(err)
+	}
+
 	// Create a new JWT middleware
 	// Note: This is just an example, please use a secure secret key
 

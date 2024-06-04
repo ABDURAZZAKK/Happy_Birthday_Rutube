@@ -26,7 +26,7 @@ func NewUserRepo(conn *sqlx.DB) User {
 }
 
 func (r *userRepo) GetByEmail(email string) (*dto.User, error) {
-	var res *dto.User
+	res := new(dto.User)
 	err := r.Get(res, `
 				SELECT email, password
 				FROM users 
@@ -62,14 +62,13 @@ func (r *userRepo) Create(in *dto.LoginRequest) (*dto.User, error) {
 		return nil, err
 	}
 
-	var res *dto.User
+	res := new(dto.User)
 	err = r.Get(res, `	
 	INSERT INTO users
 	(email, password) 
 	VALUES ($1, $2)
 	RETURNING email, password`,
-		in.Email, passHash)
-
+		in.Email, string(passHash))
 	if err != nil {
 		return nil, err
 	}
