@@ -1,6 +1,8 @@
 package dto
 
-import "time"
+import (
+	"time"
+)
 
 type EmployeeIn struct {
 	Email       string    `json:"email"`

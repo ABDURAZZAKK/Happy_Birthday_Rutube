@@ -10,7 +10,7 @@ import (
 
 type Employee interface {
 	GetByEmail(email string) (*dto.Employee, error)
-	GetAll(limit int) ([]*dto.Employee, error)
+	GetAll() ([]*dto.Employee, error)
 	Create(in *dto.EmployeeIn) (*dto.Employee, error)
 	Delete(email string) (string, error)
 }
@@ -39,9 +39,9 @@ func (r *employeeRepo) GetByEmail(email string) (*dto.Employee, error) {
 	return res, nil
 }
 
-func (r *employeeRepo) GetAll(limit int) ([]*dto.Employee, error) {
+func (r *employeeRepo) GetAll() ([]*dto.Employee, error) {
 	var res []*dto.Employee
-	err := r.Select(&res, `SELECT email, date_of_birth FROM employees LIMIT $1`, limit)
+	err := r.Select(&res, `SELECT email, date_of_birth FROM employees LIMIT $1`)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +54,12 @@ func (r *employeeRepo) GetAll(limit int) ([]*dto.Employee, error) {
 
 func (r *employeeRepo) Create(in *dto.EmployeeIn) (*dto.Employee, error) {
 	res := new(dto.Employee)
-	err := r.Get(res, `	
+	err := r.QueryRow(`	
 	INSERT INTO employees
 	(email, date_of_birth) 
 	VALUES ($1, $2)
 	RETURNING email, date_of_birth`,
-		in.Email, in.DateOfBirth)
+		in.Email, in.DateOfBirth).Scan(&res.Email, &res.DateOfBirth)
 
 	if err != nil {
 		return nil, err

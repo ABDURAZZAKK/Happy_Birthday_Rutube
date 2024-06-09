@@ -5,16 +5,19 @@ import (
 
 	"github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/models/user/dto"
 	uerr "github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/models/user/errors"
+	utils "github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/models/user/utils"
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type User interface {
 	GetByEmail(email string) (*dto.User, error)
-	GetAll(limit int) ([]*dto.User, error)
+	GetAll() ([]*dto.User, error)
 	Create(in *dto.LoginRequest) (*dto.User, error)
 	Delete(email string) (string, error)
+
+	Sub(in *dto.SubIn) (*dto.Sub, error)
+	GetAllSubs() ([]*dto.Sub, error)
 }
 
 type userRepo struct {
@@ -41,9 +44,9 @@ func (r *userRepo) GetByEmail(email string) (*dto.User, error) {
 	return res, nil
 }
 
-func (r *userRepo) GetAll(limit int) ([]*dto.User, error) {
+func (r *userRepo) GetAll() ([]*dto.User, error) {
 	var res []*dto.User
-	err := r.Select(&res, `SELECT email, password FROM users LIMIT $1`, limit)
+	err := r.Select(&res, `SELECT email, password FROM users LIMIT $1`)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +59,7 @@ func (r *userRepo) GetAll(limit int) ([]*dto.User, error) {
 
 func (r *userRepo) Create(in *dto.LoginRequest) (*dto.User, error) {
 
-	passHash, err := bcrypt.GenerateFromPassword([]byte(in.Password), bcrypt.DefaultCost)
+	passHash, err := utils.HashPassword(in.Password)
 	if err != nil {
 		log.Errorf("UserService Create: %v", err)
 		return nil, err
@@ -87,4 +90,55 @@ func (r *userRepo) Delete(email string) (string, error) {
 	}
 
 	return name, nil
+}
+
+func (r *userRepo) Sub(in *dto.SubIn) (*dto.Sub, error) {
+	tx, err := r.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+	res := new(dto.Sub)
+	err = tx.QueryRow(`INSERT INTO subs (user, employee) VALUES ($1, $2) returning id, user, employee`, in.UserEmail, in.EmployeeEmail).
+		Scan(&res.ID, &res.UserEmail, &res.EmployeeEmail)
+	if err != nil {
+		return nil, err
+	}
+	err = tx.QueryRow(`SELECT date_of_birth FROM employees WHERE email = $1;`,
+		res.EmployeeEmail).Scan(&res.EmployeeDateOfBirth)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (r *userRepo) GetAllSubs() ([]*dto.Sub, error) {
+	var res []*dto.Sub
+	rows, err := r.Query(`SELECT s.id, s.user, s.employee, e.date_of_birth FROM subs AS s 
+					      JOIN employees AS e ON e.email = s.employee LIMIT  $1`)
+
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		var sub dto.Sub
+		if err := rows.Scan(&sub.ID, &sub.UserEmail, &sub.EmployeeEmail, &sub.EmployeeDateOfBirth); err != nil {
+			return nil, err
+		}
+		res = append(res, &sub)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if res == nil {
+		return []*dto.Sub{}, nil
+	}
+
+	return res, nil
 }

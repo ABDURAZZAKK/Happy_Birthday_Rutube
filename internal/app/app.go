@@ -5,6 +5,7 @@ import (
 
 	"github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/config"
 	"github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/middlewares"
+	employee_hendlers "github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/models/employee/handlers"
 	user_hendlers "github.com/ABDURAZZAKK/Happy_Birthday_Rutube/internal/models/user/handlers"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jmoiron/sqlx"
@@ -15,7 +16,7 @@ import (
 
 func Run() {
 	SetLogger()
-	// Create a new Fiber instance
+
 	app := fiber.New()
 
 	db, err := sqlx.Open("sqlite3", config.DATABASE_URL)
@@ -32,17 +33,26 @@ func Run() {
 		log.Fatalln(err)
 	}
 
-	// Create a new JWT middleware
-	// Note: This is just an example, please use a secure secret key
-
 	jwt := middlewares.NewAuthMiddleware(config.SECKRET_KEY)
 
 	uh := user_hendlers.NewUserHendlers(db)
 
-	// Create a Login route
+	app.Post("/registration", uh.Create)
+
 	app.Post("/login", uh.Login)
-	// Create a protected route
-	app.Get("/protected", jwt, uh.Protected)
-	// Listen on port 3000
+
+	app.Get("/user/get/:email", jwt, uh.GetByEmail)
+	app.Get("/user/all", jwt, uh.GetAll)
+	app.Delete("/user/delete/:email", jwt, uh.Delete)
+	app.Post("/user/sub/:email", jwt, uh.Sub)
+	app.Get("/user/subs", jwt, uh.GetAllSubs)
+
+	eh := employee_hendlers.NewEmployeeHendlers(db)
+
+	app.Get("/employee/get/:email", jwt, eh.GetByEmail)
+	app.Get("/employee/all", jwt, eh.GetAll)
+	app.Post("employee/create", jwt, eh.Create)
+	app.Delete("/employee/delete/:email", jwt, eh.Delete)
+
 	app.Listen(":3000")
 }

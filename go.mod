@@ -17,9 +17,10 @@ require (
 )
 
 require (
+	cloud.google.com/go v0.114.0
 	github.com/andybalholm/brotli v1.0.5 // indirect
 	github.com/gofiber/jwt/v3 v3.3.10
-	github.com/google/uuid v1.5.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/klauspost/compress v1.17.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
